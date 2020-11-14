@@ -87,8 +87,6 @@ class LinearClassifier(object):
 
         print("Training", end="")
         for epoch_idx in range(max_epochs):
-            total_correct = 0
-            average_loss = 0
 
             # TODO:
             #  Implement model training loop.
@@ -102,7 +100,31 @@ class LinearClassifier(object):
             #     using the weight_decay parameter.
 
             # ====== YOUR CODE: ======
-            raise NotImplementedError()
+            total_correct = 0
+            cum_loss = 0
+            num_batch = 0
+            for x_train, y_train in dl_train:
+                y_pred, x_scores = self.predict(x_train)
+                total_correct += torch.sum(y_train == y_pred).item()
+                cum_loss += loss_fn.loss(x_train, y_train, x_scores, y_pred)
+                grad = loss_fn.grad() + weight_decay * self.weights
+                self.weights = self.weights - learn_rate * grad
+                num_batch += 1
+
+            train_res.accuracy.append(total_correct / (num_batch * dl_train.batch_size))
+            train_res.loss.append(cum_loss / num_batch)
+
+            total_correct = 0
+            num_batch = 0
+            cum_loss = 0
+            for x_valid, y_valid in dl_valid:
+                y_pred, x_scores = self.predict(x_valid)
+                total_correct += torch.sum(y_valid == y_pred).item()
+                cum_loss = loss_fn.loss(x_valid, y_valid, x_scores, y_pred)
+                num_batch += 1
+
+            valid_res.accuracy.append(total_correct / (num_batch * dl_valid.batch_size))
+            valid_res.loss.append(cum_loss / num_batch)
             # ========================
             print(".", end="")
 
@@ -136,7 +158,9 @@ def hyperparams():
     #  Manually tune the hyperparameters to get the training accuracy test
     #  to pass.
     # ====== YOUR CODE: ======
-    raise NotImplementedError()
+    hp['weight_std'] = 0.1
+    hp['learn_rate'] = 0.1
+    hp['weight_decay'] = 0.001
     # ========================
 
     return hp
