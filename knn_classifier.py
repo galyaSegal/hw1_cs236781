@@ -31,7 +31,14 @@ class KNNClassifier(object):
         #     y_train.
         #  2. Save the number of classes as n_classes.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        x_train = torch.tensor([])
+        y_train = torch.tensor([])
+        for i, data in enumerate(dl_train):
+            image = data[0]
+            label = data[1]
+            x_train = torch.cat([image, x_train], 0)
+            y_train = torch.cat([label, y_train], 0)
+        n_classes = len(torch.unique(y_train))
         # ========================
 
         self.x_train = x_train
@@ -63,7 +70,8 @@ class KNNClassifier(object):
             #  - Set y_pred[i] to the most common class among them
             #  - Don't use an explicit loop.
             # ====== YOUR CODE: ======
-            raise NotImplementedError()
+            k_pred = self.y_train[torch.topk(dist_matrix[:, i], self.k, largest=False).indices]
+            y_pred[i] = torch.mode(k_pred).values
             # ========================
 
         return y_pred
@@ -89,9 +97,12 @@ def l2_dist(x1: Tensor, x2: Tensor):
     #    combine the three terms efficiently.
     #  - Don't use torch.cdist
 
-    dists = None
     # ====== YOUR CODE: ======
-    raise NotImplementedError()
+    x1_pow_2 = (x1 ** 2).sum(dim=1)
+    x2_t = torch.transpose(x2, 0, 1)
+    x2_t_pow_2 = (x2_t ** 2).sum(dim=0)
+    x1x2 = torch.mm(x1, x2_t)
+    dists = torch.sqrt(x1_pow_2.reshape(-1, 1) - 2 * x1x2 + x2_t_pow_2)
     # ========================
 
     return dists
@@ -99,7 +110,7 @@ def l2_dist(x1: Tensor, x2: Tensor):
 
 def accuracy(y: Tensor, y_pred: Tensor):
     """
-    Calculate prediction accuracy: the fraction of predictions in that are
+    Calculate prediction accuracy: the fraction of predictions in y_pred that are
     equal to the ground truth.
     :param y: Ground truth tensor of shape (N,)
     :param y_pred: Predictions vector of shape (N,)
@@ -109,9 +120,8 @@ def accuracy(y: Tensor, y_pred: Tensor):
     assert y.dim() == 1
 
     # TODO: Calculate prediction accuracy. Don't use an explicit loop.
-    accuracy = None
     # ====== YOUR CODE: ======
-    raise NotImplementedError()
+    accuracy = torch.sum(y == y_pred).item() / len(y)
     # ========================
 
     return accuracy
@@ -142,10 +152,22 @@ def find_best_k(ds_train: Dataset, k_choices, num_folds):
         #  random split each iteration), or implement something else.
 
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        for k_fold in range(num_folds):
+            val_idx = list(range(k_fold, k_fold))
+
+            acc = []
+            x_val = None; y_test = None
+            dl_train = None
+            model.train(dl_train)
+            y_pred = model.predict(x_val)
+            acc.append(accuracy(y_test, y_pred))
+        accuracies.append(acc)
+
         # ========================
 
     best_k_idx = np.argmax([np.mean(acc) for acc in accuracies])
     best_k = k_choices[best_k_idx]
 
     return best_k, accuracies
+
+def split_data()
