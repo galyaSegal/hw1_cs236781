@@ -61,7 +61,8 @@ class SVMHingeLoss(ClassifierLoss):
 
         # TODO: Save what you need for gradient calculation in self.grad_ctx
         # ====== YOUR CODE: ======
-        # raise NotImplementedError()
+        self.grad_ctx = dict({'marginal_hinge_loss': marginal_hinge_loss, 'y': y,
+                              'x': x, 'rows': rows})
         # ========================
 
         return loss
@@ -77,9 +78,13 @@ class SVMHingeLoss(ClassifierLoss):
         #  Same notes as above. Hint: Use the matrix M from above, based on
         #  it create a matrix G such that X^T * G is the gradient.
 
-        grad = None
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        marginal_hinge_loss = self.grad_ctx['marginal_hinge_loss']
+        y, x, rows = self.grad_ctx['y'], self.grad_ctx['x'], self.grad_ctx['rows']
+        marginal_hinge_loss[marginal_hinge_loss > 0] = 1
+        y_marginal_hinge_loss = torch.sum(marginal_hinge_loss, dim=1)
+        marginal_hinge_loss[rows, y] = y_marginal_hinge_loss
+        grad = torch.matmul(x.transpose(0, 1), marginal_hinge_loss)
         # ========================
 
         return grad
