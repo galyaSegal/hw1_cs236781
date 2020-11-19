@@ -148,7 +148,7 @@ class LinearClassifier(object):
         if has_bias:
             m_weights = self.weights[1:, :]
         num_classes = m_weights.size()[1]
-        w_images = m_weights.view(num_classes, *img_shape)
+        w_images = torch.transpose(m_weights, 0, 1).view(num_classes, *img_shape)
         # ========================
 
         return w_images

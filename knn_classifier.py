@@ -156,21 +156,24 @@ def find_best_k(ds_train: Dataset, k_choices, num_folds):
         acc = []
         num_samples = len(ds_train)
         p = math.floor(num_samples / num_folds)
-        indices = list(range(num_samples))
+        indices = torch.randperm(num_samples)
         for k_fold in range(num_folds):
             if k_fold == num_folds-1:
                 valid_inx = indices[-p:]
                 train_inx = indices[:-p]
             else:
-                valid_inx = indices[k_fold*p:k_fold*(p+1)]
-                mask = np.ones(num_samples)
-                mask[k_fold*p:k_fold*(p+1)] = 0
-                train_inx = np.ma.masked_array(indices, mask)
-            dl_train = torch.utils.data.DataLoader(ds_train[train_inx])
-            dl_valid = torch.utils.data.DataLoader(ds_train[valid_inx])
+                valid_inx = indices[k_fold*p:(k_fold+1)*p]
+                mask = torch.ones(num_samples, dtype=bool)
+                mask[k_fold*p:(k_fold+1)*p] = False
+                train_inx = torch.masked_select(indices, mask)
+            valid_sampler = torch.utils.data.SubsetRandomSampler(valid_inx)
+            train_sampler = torch.utils.data.SubsetRandomSampler(train_inx)
+            dl_train = torch.utils.data.DataLoader(ds_train, sampler=train_sampler)
+            dl_valid = torch.utils.data.DataLoader(ds_train, sampler=valid_sampler)
             model.train(dl_train)
-            y_pred = model.predict(dl_valid)
-            #acc.append(accuracy(y_valid, y_pred))
+            x_valid, y_valid = dataloader_utils.flatten(dl_valid)
+            y_pred = model.predict(x_valid)
+            acc.append(accuracy(y_valid, y_pred))
         accuracies.append(acc)
 
         # ========================
