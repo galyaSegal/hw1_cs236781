@@ -91,7 +91,8 @@ part4_q1 = r"""
 The ideal pattern will be with the residuals around and as close to zero with a fixed variance over y_pred. <br>
 <br>
 
-It seems the residuals on the final plot are closer to zero and more uniformly spread than the first top-5 plot which gets a kind of curved shape in response to y_pred. <br>
+It seems that the residuals on the final plot are closer to zero and more uniformly spread than the first top-5 plot<br>
+(it seems that in the case of the first top-5 plot there is a relation between y_pred and the residuals which we can see as a curve shape of the dots). <br>
 Thus, we think the final model fits the data well and better than the previous model. <br>
 
 """
@@ -99,7 +100,7 @@ Thus, we think the final model fits the data well and better than the previous m
 part4_q2 = r"""
 
 1. Yes, as the linearity is considered relatively to $\mat{W}$ and not relatively to the original features. <br>
-2. Yes, as any non-linear relation between the original features can be obtained by feature engineering at the price of higher dimension. <br>
+2. Yes, as any known non-linear relation between the original features can be obtained by feature engineering at the price of higher dimension. <br>
 3. The decision boundary after adding the non-linear features will be of higher space. It would still be a hyperplane as the model of linear regression always learn a linear separator (as it is still linear in terms of $\mat{W}$). <br>
 """
 
