@@ -85,25 +85,34 @@ the test set. It reaches ~88% accuracy on the test set, so it is not highly over
 # Part 4 answers
 
 part4_q1 = r"""
-**Your answer:**
+The ideal pattern will be with the residuals around and as close to zero with a fixed variance over y_pred. <br>
+<br>
+
+It seems the residuals on the final plot are closer to zero and more uniformly spread than the first top-5 plot which gets a kind of curved shape in response to y_pred. <br>
+Thus, we think the final model fits the data well and better than the previous model. <br>
 
 """
 
 part4_q2 = r"""
-**Your answer:**
 
-
-```
-An equation: $e^{i\pi} -1 = 0$
-
+1. Yes, as the linearity is considered relatively to $\mat{W}$ and not relatively to the original features. <br>
+2. Yes, as any non-linear relation between the original features can be obtained by feature engineering at the price of higher dimension. <br>
+3. The decision boundary after adding the non-linear features will be of higher space. It would still be a hyperplane as the model of linear regression always learn a linear separator (as it is still linear in terms of $\mat{W}$). <br>
 """
 
 part4_q3 = r"""
-**Your answer:**
 
+1. We used np.logspace instead of np.linspace as logarithmic scale enables us to search a bigger space with dramatically different values quickly. <br> 
+In addition, it enables us to be more sensitive regard smaller values as we expect less variation in the results between bigger values of the regularization coefficient.<br>
 
-```
-An equation: $e^{i\pi} -1 = 0$
+2. We fitted the model k_folds times for each combination of the hyperparameters (which delved of the given ranges)  <br>
+
+<br>
+|degree_range = np.arange(1, 4)| = 3 <br>
+|lambda_range = np.logspace(-3, 2, base=10, num=20)| = 20<br>
+k_folds = 3<br>
+<br>
+Total_fitted = 3 * 20 *3  = 180 times
 
 """
 
