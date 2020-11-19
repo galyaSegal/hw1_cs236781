@@ -2,6 +2,7 @@ import numpy as np
 import torch
 from torch import Tensor
 from torch.utils.data import Dataset, DataLoader
+import math
 
 import cs236781.dataloader_utils as dataloader_utils
 
@@ -152,15 +153,27 @@ def find_best_k(ds_train: Dataset, k_choices, num_folds):
         #  random split each iteration), or implement something else.
 
         # ====== YOUR CODE: ======
+        acc = []
+        num_samples = len(ds_train)
+        p = math.floor(num_samples / num_folds)
+        indices = torch.randperm(num_samples)
         for k_fold in range(num_folds):
-            val_idx = list(range(k_fold, k_fold))
-
-            acc = []
-            x_val = None; y_test = None
-            dl_train = None
+            if k_fold == num_folds-1:
+                valid_inx = indices[-p:]
+                train_inx = indices[:-p]
+            else:
+                valid_inx = indices[k_fold*p:(k_fold+1)*p]
+                mask = torch.ones(num_samples, dtype=bool)
+                mask[k_fold*p:(k_fold+1)*p] = False
+                train_inx = torch.masked_select(indices, mask)
+            valid_sampler = torch.utils.data.SubsetRandomSampler(valid_inx)
+            train_sampler = torch.utils.data.SubsetRandomSampler(train_inx)
+            dl_train = torch.utils.data.DataLoader(ds_train, sampler=train_sampler)
+            dl_valid = torch.utils.data.DataLoader(ds_train, sampler=valid_sampler)
             model.train(dl_train)
-            y_pred = model.predict(x_val)
-            acc.append(accuracy(y_test, y_pred))
+            x_valid, y_valid = dataloader_utils.flatten(dl_valid)
+            y_pred = model.predict(x_valid)
+            acc.append(accuracy(y_valid, y_pred))
         accuracies.append(acc)
 
         # ========================
@@ -169,5 +182,3 @@ def find_best_k(ds_train: Dataset, k_choices, num_folds):
     best_k = k_choices[best_k_idx]
 
     return best_k, accuracies
-
-def split_data()

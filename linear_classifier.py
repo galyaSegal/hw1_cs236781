@@ -145,7 +145,10 @@ class LinearClassifier(object):
         #  The output shape should be (n_classes, C, H, W).
 
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        if has_bias:
+            m_weights = self.weights[1:, :]
+        num_classes = m_weights.size()[1]
+        w_images = torch.transpose(m_weights, 0, 1).view(num_classes, *img_shape)
         # ========================
 
         return w_images

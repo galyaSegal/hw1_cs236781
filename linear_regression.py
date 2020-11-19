@@ -30,9 +30,8 @@ class LinearRegressor(BaseEstimator, RegressorMixin):
 
         # TODO: Calculate the model prediction, y_pred
 
-        y_pred = None
         # ====== YOUR CODE: ======
-        y_pred = np.matmul(X, self.weights_)
+        y_pred = np.matmul(np.transpose(self.weights_), np.transpose(X))
         # ========================
 
         return y_pred
@@ -49,24 +48,24 @@ class LinearRegressor(BaseEstimator, RegressorMixin):
         #  Calculate the optimal weights using the closed-form solution you derived.
         #  Use only numpy functions. Don't forget regularization!
 
-        w_opt = None
         # ====== YOUR CODE: ======
-        reg_term = np.identity(X.shape[1])
-        reg_term[0, 0] = 0
-        reg_term = X.shape[0] * self.reg_lambda * reg_term
-        w_opt = X.transpose().dot(X) + reg_term
-        w_opt = np.linalg.inv(w_opt)
-        w_opt = np.matmul(w_opt, np.matmul(X.T, y))
-        self.weights_ = w_opt
+        num_samples, num_features = np.shape(X)[0], np.shape(X)[1]
+        m_reg = num_samples * self.reg_lambda * np.eye(num_features)
+        m_reg[0, 0] = 0
+        w_opt = np.matmul(np.linalg.inv(np.transpose(np.matmul(np.transpose(X), X) + m_reg)),
+                          np.matmul(np.transpose(X), y))
         # ========================
 
+        self.weights_ = w_opt
         return self
 
     def fit_predict(self, X, y):
         return self.fit(X, y).predict(X)
 
 
-def fit_predict_dataframe(model, df: DataFrame, target_name: str, feature_names: List[str] = None):
+def fit_predict_dataframe(
+    model, df: DataFrame, target_name: str, feature_names: List[str] = None,
+):
     """
     Calculates model predictions on a dataframe, optionally with only a subset of
     the features (columns).
@@ -80,16 +79,12 @@ def fit_predict_dataframe(model, df: DataFrame, target_name: str, feature_names:
     """
     # TODO: Implement according to the docstring description.
     # ====== YOUR CODE: ======
+    if feature_names is None:
+        feature_names = df.columns[:-1]
+    X = df[feature_names]
     y = df[target_name]
-
-    if feature_names is not None:
-        x = df[feature_names]
-    else:
-        x = df.drop([target_name], axis=1)
-
-    y_pred = model.fit_predict(x, y)
-
-     # ========================
+    y_pred = model.fit_predict(X, y)
+    # ========================
     return y_pred
 
 
@@ -109,9 +104,9 @@ class BiasTrickTransformer(BaseEstimator, TransformerMixin):
         #  Add bias term to X as the first feature.
         #  See np.hstack().
 
-        xb = None
         # ====== YOUR CODE: ======
-        xb = np.hstack((np.ones((X.shape[0], 1)), X))
+        vBias = np.ones((np.shape(X)[0], 1))
+        xb = np.hstack((vBias, X))
         # ========================
 
         return xb
@@ -128,6 +123,8 @@ class BostonFeaturesTransformer(BaseEstimator, TransformerMixin):
         # TODO: Your custom initialization, if needed
         # Add any hyperparameters you need and save them as above
         # ====== YOUR CODE: ======
+        self.poly = sklearn.preprocessing.PolynomialFeatures(degree, interaction_only=True, include_bias=False)
+
         # ========================
 
     def fit(self, X, y=None):
@@ -147,10 +144,11 @@ class BostonFeaturesTransformer(BaseEstimator, TransformerMixin):
         #  (this class is "Boston-specific"). For example X[:,1] is the second
         #  feature ('ZN').
 
-        X_transformed = None
         # ====== YOUR CODE: ======
-        poly = sklearn.preprocessing.PolynomialFeatures(self.degree)
-        X_transformed = poly.fit_transform(X)
+        # remove features with small correlations to the target
+        X_transformed = np.delete(X, [3, 7, 11], 1)
+        # apply polynomial features
+        X_transformed = self.poly.fit_transform(X_transformed)
         # ========================
 
         return X_transformed
@@ -174,15 +172,18 @@ def top_correlated_features(df: DataFrame, target_feature, n=5):
     # TODO: Calculate correlations with target and sort features by it
 
     # ====== YOUR CODE: ======
-    corr_matrix = df.corr()
-    medv_corrs = corr_matrix.loc[target_feature]
-    abs_medv_corrs = medv_corrs.abs()
-    abs_medv_corrs.sort_values(kind="quicksort", ascending=False, inplace=True)
-    top_n_corr_series = abs_medv_corrs[1:n+1]
-    top_n_features = top_n_corr_series.index
-    top_n_corr = top_n_corr_series.values
+    vCorr = np.array([])
+    vMeans = df[df.columns[:]].mean()
+    v_sigma = (((df - vMeans) ** 2).sum()) ** 0.5
+    for column in df.columns[:-1]:
+        sigma_xy = ((df[column] - vMeans[column]) * (df[target_feature] - df[target_feature].mean())).sum()
+        corr = sigma_xy / (v_sigma[column] * v_sigma[target_feature])
+        vCorr = np.append(vCorr, corr)
     # ========================
-
+    max_n_inx = np.argpartition(abs(vCorr), -n)[-n:]
+    max_n_inx_sort = np.flip(max_n_inx[np.argsort(abs(vCorr[max_n_inx]))])
+    top_n_corr = vCorr[max_n_inx_sort]
+    top_n_features = df.columns[max_n_inx_sort]
     return top_n_features, top_n_corr
 
 
@@ -196,7 +197,8 @@ def mse_score(y: np.ndarray, y_pred: np.ndarray):
 
     # TODO: Implement MSE using numpy.
     # ====== YOUR CODE: ======
-    mse = np.mean(np.square(y-y_pred))
+    num_samples = len(y)
+    mse = sum((y - y_pred) ** 2) / num_samples
     # ========================
     return mse
 
@@ -211,10 +213,7 @@ def r2_score(y: np.ndarray, y_pred: np.ndarray):
 
     # TODO: Implement R^2 using numpy.
     # ====== YOUR CODE: ======
-    y_bar = np.mean(y)
-    ss_res = np.sum(np.square(y - y_pred))
-    ss_t = np.sum(np.square(y - y_bar))
-    r2 = 1 - ss_res/ss_t
+    r2 = 1 - sum((y - y_pred) ** 2) / sum((y - y.mean()) ** 2)
     # ========================
     return r2
 
@@ -247,12 +246,11 @@ def cv_best_hyperparams(
     #  - You can use MSE or R^2 as a score.
 
     # ====== YOUR CODE: ======
-    parameters = {'bostonfeaturestransformer__degree':degree_range, 'linearregressor__reg_lambda':lambda_range}
-    kf = sklearn.model_selection.KFold(n_splits=k_folds, random_state=1, shuffle=True)
-    model_gs = sklearn.model_selection.GridSearchCV(model, parameters,  scoring=('neg_mean_squared_error'), cv=kf)
-    best_model = model_gs.fit(X, y)
-
+    param_grid = {'bostonfeaturestransformer__degree': degree_range,
+                  'linearregressor__reg_lambda': lambda_range}
+    kf = sklearn.model_selection.KFold(n_splits=k_folds, shuffle=True)
+    kfgs = sklearn.model_selection.GridSearchCV(model, param_grid, scoring='r2', cv=kf)
+    best_model = kfgs.fit(X, y)
     best_params = best_model.best_params_
     # ========================
-
     return best_params
