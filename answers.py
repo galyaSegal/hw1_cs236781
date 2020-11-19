@@ -49,21 +49,24 @@ set should be used only once for evaluation, not for selection of the best model
 
 part3_q1 = r"""
 **Your answer:**
-$\Delta$ is a hyperparameter of the model, which allows some error for wrong predictions (margin). Since it is a 
-hyperparameter, it can be tuned and its value is arbitrary as long as it is positive (sustains the 'direction' of the 
-error).
+$\Delta$ is a hyperparameter of the model, which allows some error for wrong predictions (margin). We also added
+regularization on the weights, and the weights can be thought of as the distance between the sample and the decision 
+boundary. Changing $\Delta$ will result in a different model with different weights, so the value of $\Delta$ is
+arbitrary.
 
 """
 
 part3_q2 = r"""
 **Your answer:**
-1. The linear model tries to fit non-linear shapes (numbers) by multiple linear classifications. For example, in the 
-first error the model classified a 5 digit as a 6 digit. If we look closely in the written digit, it is not a 'typical'
- 5 digit, and it has multiple lines which resemble the shape of a 5 digit.
+1. The linear model learns the locations of each label and then fits the digit which resembles the cuurent sample 
+ the most. For example, in the first error the model classified a 5 digit as a 6 digit. If we look closely in the
+ written digit, it is not a 'typical' 5 digit- it resembles the shape of a 5 digit, and it is quite clear why the model
+ wrongly classified this specific sample.
  
-2. A KNN model can be thought of as a classification which finds the digit which resembles most the one we are 
- classifying. It is somewhat different from linear classification, which fits linear lines to the non-linear shapes. 
- However, both models try to learn characteristics which are unique for each digit.
+2. A KNN model can be thought of as a classification which finds the digit which uses the k closest samples with the
+ features (locations) which resembles most the one we are currently classifying. It is somewhat different from linear
+classification, which uses all the data to learn the locations of each label. 
+ However, both models try to learn the locations which are unique for each digit.
 
 """
 
